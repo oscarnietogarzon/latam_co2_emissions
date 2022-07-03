@@ -1,0 +1,13 @@
+name: co2_emissions_latam
+title: co2_emissions_latam
+username:
+account: oscarng
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 6497383
+bundleId: 6012112
+url: https://oscarng.shinyapps.io/co2_emissions_latam/
+when: 1655336806.3631
+lastSyncTime: 1655336806.3631
+asMultiple: FALSE
+asStatic: FALSE

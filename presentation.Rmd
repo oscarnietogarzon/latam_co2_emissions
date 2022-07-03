@@ -1,0 +1,96 @@
+---
+title: "Course project"
+subtitle: "Total CO2 emissions in Latin America countries"
+author: "Oscar Nieto G"
+date: "6/15/2022"
+output: slidy_presentation
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+## Introduction
+
+Some visualizations of the behavior of the CO$_{2}$ emissions by Latin America countries are presented. The dataset was obtained from a collection of metrics maintained by [Our World in Data](https://ourworldindata.org/co2-and-other-greenhouse-gas-emissions), available at [co2-data](https://raw.githubusercontent.com/owid/co2-data/master/owid-co2-data.csv).
+
+```{r out.width="300px", fig.align="center"}
+
+url <- "https://as1.ftcdn.net/v2/jpg/01/23/03/48/1000_F_123034829_JYOf4x538pMkbB1HhkK90aPGOetAHZvR.jpg"
+knitr::include_graphics(url)
+
+```
+
+## Time series plot
+
+To represent the behavior of the CO$_{2}$ emissions on Latin America in the last 30 years or less a time series plot were generated, representing the trend by each selected country.
+
+```{r echo = FALSE, message=FALSE}
+
+  
+library(tidyverse)
+library(plotly)
+
+df <- read.csv('https://raw.githubusercontent.com/owid/co2-data/master/owid-co2-data.csv')
+lac_countries <- c("Belize", "Costa Rica", "El Salvador", "Guatemala", "Honduras", "Mexico", "Nicaragua", "Panama", "Argentina", "Bolivia", "Brazil", "Chile", "Colombia", "Ecuador",
+                   "Guyana", "Paraguay", "Peru", "Suriname", "Uruguay", "Venezuela", "Cuba", "Dominican Republic",
+                   "Haiti", "Puerto Rico")
+
+df %>% filter(year > 1990, country %in% lac_countries) %>%
+  select(c("iso_code", "country", "year", "co2", "co2_per_capita")) -> df_lac30
+
+df_lac30 %>% group_by(country) %>% summarize(tot_co2 = sum(co2)) %>%
+  arrange(desc(tot_co2)) %>% dplyr::pull(country) -> country
+
+top <-  country[1:5]
+
+df_lac30 %>% filter(country %in% top) %>%
+  ggplot( aes(x=year, y=co2, color=country)) +
+  geom_line(size = 0.7) + 
+  scale_color_brewer(palette = "Set2") +
+  labs(x="", y="Millon Tonnes", title= bquote('Annual'~CO[2]~'Emissions' ) ) +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust=0.5, size=20, face="bold")) -> p
+
+plotly::ggplotly(p) 
+
+```
+
+## Map with the total distribution of CO$_{2}$
+
+The following map shows the total CO$_{2}$ emitted by Latin American countries in the last 30 years.
+
+```{r echo = FALSE, message=FALSE}
+
+library(leaflet)
+library(maps)
+
+df_lac30 %>% group_by(country) %>% summarize(tot_co2 = sum(co2)) %>%
+  arrange(desc(tot_co2)) -> tot_co2
+
+mybins <- c(0,100,500,1000,5000,10000,50000)
+mypalette <- colorBin( palette="YlOrBr", domain=tot_co2$tot_co2, na.color="transparent", bins=mybins)
+bounds <- map("world", tot_co2$country, fill = TRUE, plot = FALSE)
+        
+        leaflet() %>%
+            addProviderTiles(providers$Stamen.TonerLite,
+                             options = providerTileOptions(noWrap = TRUE) ) %>%
+            
+            addPolygons(data = bounds, group = "country", 
+                        fillColor =  ~mypalette(tot_co2$tot_co2),
+                        stroke=TRUE, 
+                        color = "white",
+                        weight=0.3,
+                        popup = paste("Country: ", bounds$names),
+                        fillOpacity = 0.9,
+            ) %>%
+            addLegend(pal=mypalette, values=tot_co2, opacity=0.9, title = "Total Emissions (CO2)", position = "bottomleft" )
+
+```
+
+## Conclusions
+
+Finally, we can highlight some key insights:
+
+- Mexico and Brazil are the two countries that have emitted more CO$_{2}$ in Latin America in the last 30 years.
+- There was an upward trend on the emissions between 1990 to 2014, after this year there was an slight decrease in the emissions of the five top countries. 
